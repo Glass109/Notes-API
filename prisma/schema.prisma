@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  email     String  @unique
+  password  String
+  notes     Note[]
+  createdAt DateTime @default(now())
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  favorite  Boolean  @default(false)
+  archived  Boolean  @default(false)
+  deletedAt DateTime? // Para saber si la nota fue eliminada
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags      NoteTag[]
+}
+
+model Tag {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  notes NoteTag[]
+}
+
+model NoteTag {
+  id     Int   @id @default(autoincrement())
+  noteId Int
+  tagId  Int
+  note   Note  @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag    Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+}
+
