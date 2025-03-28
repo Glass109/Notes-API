@@ -27,9 +27,9 @@ export const getNote = async (req, res) => {
     }
 
     const note = await prisma.note.findUnique({
-      where: { id: noteId }, 
+      where: { id: noteId },
       include: {
-        tags: { select: { tag: true } }, 
+        tags: { select: { tag: true } },
       },
     });
 
@@ -43,7 +43,7 @@ export const getNote = async (req, res) => {
 
     res.json({
       ...note,
-      tags: note.tags.map((noteTag) => noteTag.tag.name), 
+      tags: note.tags.map((noteTag) => noteTag.tag.name),
     });
   } catch (error) {
     console.error("Error en getNote:", error);
@@ -108,7 +108,7 @@ export const updateNote = async (req, res) => {
         content,
         favorite: favorite !== undefined ? favorite : undefined,
         tags: {
-          deleteMany: {}, 
+          deleteMany: {},
           create: tags.map((tagName) => ({
             tag: {
               connectOrCreate: {
