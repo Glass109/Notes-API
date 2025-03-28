@@ -52,7 +52,12 @@ export const getNote = async (req, res) => {
 };
 
 export const createNote = async (req, res) => {
-  const { title, content, tags, favorite } = req.body;
+  const { title, content, tags = [], favorite } = req.body;
+
+  // Verificar que title y content estén definidos
+  if (!title || !content) {
+    return res.status(400).json({ message: "El título y el contenido son obligatorios." });
+  }
 
   try {
     const note = await prisma.note.create({
@@ -82,7 +87,7 @@ export const createNote = async (req, res) => {
       tags: note.tags.map((noteTag) => noteTag.tag.name),
     });
   } catch (error) {
-    res.status(400).json({ message: "Error al crear nota" });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -101,6 +106,10 @@ export const updateNote = async (req, res) => {
 
     if (!existingNote) return res.status(404).json({ message: "Nota no encontrada" });
 
+    const existingTags = existingNote.tags.map(tag => tag.tag.name);
+    const tagsToDelete = existingTags.filter(tag => !tags.includes(tag));
+    const tagsToAdd = tags.filter(tag => !existingTags.includes(tag));
+
     const note = await prisma.note.update({
       where: { id: existingNote.id },
       data: {
@@ -108,8 +117,8 @@ export const updateNote = async (req, res) => {
         content,
         favorite: favorite !== undefined ? favorite : undefined,
         tags: {
-          deleteMany: {},
-          create: tags.map((tagName) => ({
+          deleteMany: { tag: { name: { in: tagsToDelete } } },
+          create: tagsToAdd.map((tagName) => ({
             tag: {
               connectOrCreate: {
                 where: { name: tagName },
@@ -129,7 +138,7 @@ export const updateNote = async (req, res) => {
       tags: note.tags.map((noteTag) => noteTag.tag.name),
     });
   } catch (error) {
-    res.status(400).json({ message: "Error al actualizar nota" });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -153,7 +162,7 @@ export const deleteNote = async (req, res) => {
 
     res.json({ message: "Nota eliminada correctamente" });
   } catch (error) {
-    res.status(404).json({ message: "Error al eliminar nota" });
+    res.status(404).json({ message: error.message });
   }
 };
 
@@ -177,7 +186,7 @@ export const archiveNote = async (req, res) => {
 
     res.json({ message: "Nota archivada correctamente", note });
   } catch (error) {
-    res.status(400).json({ message: "Error al archivar nota" });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -201,7 +210,7 @@ export const toggleFavorite = async (req, res) => {
 
     res.json(updatedNote);
   } catch (error) {
-    res.status(400).json({ message: "Error al actualizar el estado de favorito" });
+    res.status(400).json({ message: error.message });
   }
 };
 
